@@ -1,31 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Win elections!</title>
-    <link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <script src="/webjars/jquery/jquery.min.js"></script>
-    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
-    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
-    <script src="/app.js"></script>
+    <title>elections.io</title>
+
+    <link rel="stylesheet" href="css/leaflet.css"/>
+    <!--<link rel="stylesheet" href="css/leaflet.draw.css" />-->
+    <link rel="stylesheet" href="css/main.css"/>
+
+    <script src="js/leaflet.js"></script>
+    <script src="js/sockjs.min.js"></script>
+    <script src="js/stomp.min.js"></script>
+    <!--<script src="js/leaflet.draw.js"></script>-->
+    <!--<script src="js/jsts.js"></script>-->
+    <!--<script src="js/terraformer.js"></script>-->
+    <!--<script src="js/terraformer-wkt-parser.js"></script>-->
 </head>
 <body>
-<noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
-    enabled. Please enable
-    Javascript and reload this page!</h2></noscript>
-<div id="main-content" class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <form class="form-inline">
-                <div class="form-group">
-                    <label for="connect">WebSocket connection:</label>
-                    <button id="connect" class="btn btn-default" type="submit">Connect</button>
-                    <button id="disconnect" class="btn btn-default" type="submit" disabled="disabled">Disconnect
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    </form>
-</div>
+<!-- Map container -->
+<div id='map'></div>
+
+<!-- Main script -->
+<script src="js/states.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
