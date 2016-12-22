@@ -1,14 +1,12 @@
 package elections.domain;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @Setter
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class State {
 
     public enum StateParty{
@@ -23,23 +21,13 @@ public class State {
         SIMPLE_STATE
     }
 
-    public enum DefaultStates{
-        DEFAULT_DEMOCRAT_STATE("California"),
-        DEFAULT_REPUBLICAN_STATE("Florida");
-
-        String stateName;
-
-        DefaultStates(String stateName) {
-            this.stateName = stateName;
-        }
-
-        public String getStateName() {
-            return stateName;
-        }
+    public State(String stateAcronym) {
+        this.stateAcronym = stateAcronym;
     }
 
     StateParty party = StateParty.NOT_CAPTURED;
     StateType type = StateType.SIMPLE_STATE;
+    String stateAcronym;
 
-    int score = 0;
+    AtomicLong score = new AtomicLong(0);
 }

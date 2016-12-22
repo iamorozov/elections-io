@@ -3,8 +3,8 @@ package elections.domain;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @Setter
@@ -16,5 +16,5 @@ public class Game {
     }
 
     GameStatus status = GameStatus.WAITING_OTHER_PLAYER;
-    Map<String, State> states = new HashMap<>();
+    Map<String, State> modifiedStates = new ConcurrentHashMap<>();
 }
