@@ -14,6 +14,14 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
 var statesLayer = L.geoJson().addTo(map);
 statesLayer.addData(states);
 
+statesLayer.eachLayer(function (layer) {
+    console.log(layer);
+    layer.bindTooltip((0).toString(), {
+        permanent: true,
+        direction: 'center',
+        opacity: 0.85
+    }).openTooltip();
+});
 
 // L.geoJson(states, {
 //     style: {
@@ -39,15 +47,12 @@ var stompClient = null;
 var socket = new SockJS('/elections-io');
 stompClient = Stomp.over(socket);
 stompClient.connect({}, function (frame) {
-    // console.log(frame);
-    // console.log('Connected: ' + frame);
-    // stompClient.subscribe('/game/greetings', function (greeting) {
-    //     console.log(JSON.parse(greeting.body).content);
-    //     // console.log(greeting);
-    // });
-    stompClient.subscribe('/update-states', function (states) {
-        updateStates(states);
+    console.log('Connected: ' + frame);
+    stompClient.subscribe('/game/status', function (game) {
+        console.log(JSON.parse(game.body).content);
+
     });
+    stompClient.send("/app/start");
 });
 
 function updateStates(states) {
