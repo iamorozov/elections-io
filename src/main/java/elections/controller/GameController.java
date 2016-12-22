@@ -14,8 +14,7 @@ public class GameController {
     private GameService gameService;
 
     @MessageMapping("/start")
-    @SendTo("/game/status")
-    public Game startGame() throws Exception {
-        return gameService.startGame();
+    public void startGame() throws Exception {
+        gameService.startGame();
     }
 }
