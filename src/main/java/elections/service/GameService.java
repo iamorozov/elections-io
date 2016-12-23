@@ -1,6 +1,7 @@
 package elections.service;
 
 import elections.domain.Game;
+import elections.domain.Player;
 import elections.domain.State;
 import elections.domain.States;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import java.awt.event.ActionEvent;
 import java.util.*;
 
 import static elections.domain.Game.GameStatus.*;
-import static elections.domain.State.StateParty.*;
+import static elections.domain.PartyType.*;
 import static elections.domain.State.StateType.*;
 import static elections.domain.States.CALIFORNIA;
 import static elections.domain.States.FLORIDA;
@@ -32,19 +33,26 @@ public class GameService {
     private Map<String, State> states = new HashMap<>();
     private List<State> homeStates = new ArrayList<>();
 
-    public Game startGame() {
+    public Player startGame() {
         activePlayersCount++;
         if (activePlayersCount == 1) {
             game.setStatus(WAITING_OTHER_PLAYER);
             returnGameStatus();
+            Player player = new Player();
+            player.setParty(REPUBLICAN);
+            return player;
         } else if (activePlayersCount == 2) {
             game.setStatus(GAME_STARTED);
             initGame();
             startTimer();
+            Player player = new Player();
+            player.setParty(DEMOCRAT);
+            return player;
         } else if (activePlayersCount > 2) {
             game.setStatus(NO_FREE_CONNECTIONS);
+            return null;
         }
-        return game;
+        return null;
     }
 
     private void startTimer() {

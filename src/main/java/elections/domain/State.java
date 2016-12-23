@@ -9,12 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @NoArgsConstructor
 public class State {
 
-    public enum StateParty{
-        DEMOCRAT,
-        REPUBLICAN,
-        NOT_CAPTURED
-    }
-
     public enum StateType{
         HOME_STATE,
         KEY_STATE,
@@ -25,7 +19,7 @@ public class State {
         this.stateAcronym = stateAcronym;
     }
 
-    StateParty party = StateParty.NOT_CAPTURED;
+    PartyType party = PartyType.NOT_CAPTURED;
     StateType type = StateType.SIMPLE_STATE;
     String stateAcronym;
 

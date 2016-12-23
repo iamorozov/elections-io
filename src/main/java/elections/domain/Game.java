@@ -17,4 +17,6 @@ public class Game {
 
     GameStatus status = GameStatus.WAITING_OTHER_PLAYER;
     Map<String, State> modifiedStates = new ConcurrentHashMap<>();
+    Player player1;
+    Player player2;
 }
