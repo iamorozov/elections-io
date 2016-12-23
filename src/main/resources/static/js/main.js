@@ -2,7 +2,7 @@
 // Create map with center on USA.
 var map = L.map('map', {
     center: [39.50, -98.35],
-    zoom: 5
+    zoom: 4
 });
 
 const DEFAULT_BLUE = '#398bfb';
@@ -13,12 +13,14 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
     maxZoom: 7
 }).addTo(map);
 
+var iam;
 var statesLayer = L.geoJson().addTo(map);
 statesLayer.addData(states);
 var statesMap = {};
 var neighborStates = [];
 var chosenLayer = null;
 var reader = new jsts.io.GeoJSONReader();
+var mapLayersToParty = {};
 statesLayer.eachLayer(layer => {
     layer.setStyle({
         color: 'grey',
@@ -33,30 +35,38 @@ statesLayer.eachLayer(layer => {
         party: "NEUTRAL",
         score: 0
     };
-    // layer.bindTooltip((0).toString(), {
-    //     permanent: true,
-    //     direction: 'center',
-    //     opacity: 0
-    // }).openTooltip();
     layer.on('click', () => onStateClick(layer));
 });
 
 function onStateClick(layer) {
+    if (!iam)
+        return;
+    if (iam == "REPUBLICAN" && neighborStates.indexOf(layer) == -1 && statesMap[statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]].party != 'REPUBLICAN')
+        return;
+    if (iam == "DEMOCRAT" && neighborStates.indexOf(layer) == -1 && statesMap[statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]].party != 'DEMOCRAT')
+        return;
     if (chosenLayer != null) {
         if (chosenLayer == layer) {
             chosenLayer = null;
-            layer.setStyle({
-                fillColor: DEFAULT_BLUE,
-                color: DEFAULT_BLUE
-            });
             neighborStates.forEach(layer => {
                 layer.setStyle({
-                    fillColor: DEFAULT_BLUE,
-                    color: DEFAULT_BLUE
+                    fillColor: 'grey',
+                    color: 'grey'
                 });
             });
         } else if (neighborStates.indexOf(layer) != -1) {
-            alert('clicked on neighbor');
+            neighborStates.forEach(layer => {
+                layer.setStyle({
+                    fillColor: 'grey',
+                    color: 'grey'
+                });
+            });
+            neighborStates = [];
+            stompClient.send('/app/state-changed', {}, JSON.stringify({
+                'from': statesEnum[chosenLayer.toGeoJSON().properties.NAME.replace(' ', '_')],
+                'to': statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')],
+                'who': iam
+            }));
         }
         return;
     }
@@ -67,15 +77,11 @@ function onStateClick(layer) {
             if (reader.read(layer.toGeoJSON()).geometry.intersects(chosenLayerGeometry)) {
                 neighborStates.push(layer);
                 layer.setStyle({
-                    fillColor: 'red',
-                    color: 'red'
+                    fillColor: 'orange',
+                    color: 'orange'
                 });
             }
         }
-    });
-    layer.setStyle({
-        fillColor: 'green',
-        color: 'green'
     });
 }
 
@@ -102,7 +108,11 @@ function onStateClick(layer) {
 var stompClient = null;
 var socket = new SockJS('/elections-io');
 stompClient = Stomp.over(socket);
-stompClient.connect({}, () => {
+stompClient.connect({}, frame => {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", "/app/start", false);
+    xmlHttp.send(null);
+    iam = JSON.parse(xmlHttp.responseText)["party"];
     stompClient.subscribe('/game/status', function (game) {
         var newState = JSON.parse(game.body);
         for (var state in newState['modifiedStates']) {
