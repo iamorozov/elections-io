@@ -1,23 +1,21 @@
 package elections.service;
 
-import elections.domain.Game;
-import elections.domain.Player;
-import elections.domain.State;
-import elections.domain.States;
+import elections.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.swing.Timer;
-
 import java.awt.event.ActionEvent;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static elections.domain.Game.GameStatus.*;
-import static elections.domain.PartyType.*;
-import static elections.domain.State.StateType.*;
+import static elections.domain.PartyType.DEMOCRAT;
+import static elections.domain.PartyType.REPUBLICAN;
+import static elections.domain.State.StateType.HOME_STATE;
 import static elections.domain.States.CALIFORNIA;
 import static elections.domain.States.FLORIDA;
 
@@ -77,9 +75,29 @@ public class GameService {
         game.getModifiedStates().clear();
     }
 
-    public void movePoints(State from, State to) {
-        to.getScore().addAndGet(from.getScore().get());
-        from.getScore().set(1);
+    public void movePoints(String fromAcr, String toAcr, PartyType party) {
+        State from = states.get(fromAcr);
+        State to = states.get(toAcr);
+
+        if (from.getParty() != party)
+            return;
+
+        if (from.getParty() == to.getParty()) {
+            to.getScore().addAndGet(from.getScore().get() - 1);
+            to.setParty(from.getParty());
+            from.getScore().set(1);
+        } else {
+            AtomicLong toScore = to.getScore();
+            AtomicLong fromScore = from.getScore();
+
+            if (fromScore.get() >= toScore.get()) {
+                toScore.set(fromScore.get() - toScore.get());
+                to.setParty(from.getParty());
+            } else {
+                toScore.set(fromScore.get() - toScore.get());
+            }
+        }
+
         game.getModifiedStates().put(from.getStateAcronym(), from);
         game.getModifiedStates().put(to.getStateAcronym(), to);
     }

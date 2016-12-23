@@ -2,7 +2,8 @@
 // Create map with center on USA.
 var map = L.map('map', {
     center: [39.50, -98.35],
-    zoom: 4
+    zoom: 4,
+    // maxBounds: new L.latLngBounds(new L.LatLng(39.5, -98.35), new L.LatLng(61.2, 2.5))
 });
 
 const DEFAULT_BLUE = '#398bfb';
@@ -62,10 +63,15 @@ function onStateClick(layer) {
                 });
             });
             neighborStates = [];
+            console.info({
+                'from': {'stateAcronym': statesEnum[chosenLayer.toGeoJSON().properties.NAME.replace(' ', '_')]},
+                'to': {'stateAcronym': statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]},
+                'player': {'party': iam}
+            });
             stompClient.send('/app/state-changed', {}, JSON.stringify({
                 'from': statesEnum[chosenLayer.toGeoJSON().properties.NAME.replace(' ', '_')],
                 'to': statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')],
-                'who': iam
+                'party': iam
             }));
         }
         return;
