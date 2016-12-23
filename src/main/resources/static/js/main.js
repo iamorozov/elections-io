@@ -5,6 +5,8 @@ var map = L.map('map', {
     zoom: 5
 });
 
+const DEFAULT_BLUE = '#398bfb';
+
 // Add tile layer to map.
 L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
@@ -13,15 +15,69 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
 
 var statesLayer = L.geoJson().addTo(map);
 statesLayer.addData(states);
-
-statesLayer.eachLayer(function (layer) {
-    console.log(layer);
-    layer.bindTooltip((0).toString(), {
-        permanent: true,
-        direction: 'center',
-        opacity: 0.85
-    }).openTooltip();
+var statesMap = {};
+var neighborStates = [];
+var chosenLayer = null;
+var reader = new jsts.io.GeoJSONReader();
+statesLayer.eachLayer(layer => {
+    layer.setStyle({
+        color: 'grey',
+        fillColor: 'grey'
+    });
+    if (!layer.toGeoJSON().properties.NAME)
+        return;
+    const stateCodeName = statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')];
+    statesMap[stateCodeName] = {
+        layer: layer,
+        // 0 - neutral, 1 - democrats, 2 - republicans
+        party: "NEUTRAL",
+        score: 0
+    };
+    // layer.bindTooltip((0).toString(), {
+    //     permanent: true,
+    //     direction: 'center',
+    //     opacity: 0
+    // }).openTooltip();
+    layer.on('click', () => onStateClick(layer));
 });
+
+function onStateClick(layer) {
+    if (chosenLayer != null) {
+        if (chosenLayer == layer) {
+            chosenLayer = null;
+            layer.setStyle({
+                fillColor: DEFAULT_BLUE,
+                color: DEFAULT_BLUE
+            });
+            neighborStates.forEach(layer => {
+                layer.setStyle({
+                    fillColor: DEFAULT_BLUE,
+                    color: DEFAULT_BLUE
+                });
+            });
+        } else if (neighborStates.indexOf(layer) != -1) {
+            alert('clicked on neighbor');
+        }
+        return;
+    }
+    chosenLayer = layer;
+    var chosenLayerGeometry = reader.read(chosenLayer.toGeoJSON()).geometry;
+    statesLayer.eachLayer(layer => {
+        if (chosenLayer != layer) {
+            if (reader.read(layer.toGeoJSON()).geometry.intersects(chosenLayerGeometry)) {
+                neighborStates.push(layer);
+                layer.setStyle({
+                    fillColor: 'red',
+                    color: 'red'
+                });
+            }
+        }
+    });
+    layer.setStyle({
+        fillColor: 'green',
+        color: 'green'
+    });
+}
 
 // L.geoJson(states, {
 //     style: {
@@ -46,18 +102,28 @@ statesLayer.eachLayer(function (layer) {
 var stompClient = null;
 var socket = new SockJS('/elections-io');
 stompClient = Stomp.over(socket);
-stompClient.connect({}, function (frame) {
-    console.log('Connected: ' + frame);
+stompClient.connect({}, () => {
     stompClient.subscribe('/game/status', function (game) {
-        console.log(JSON.parse(game.body).content);
-
+        var newState = JSON.parse(game.body);
+        for (var state in newState['modifiedStates']) {
+            statesMap[state].layer.setStyle({
+                color: newState['modifiedStates'][state]["party"] == "REPUBLICAN" ? 'red' : 'blue',
+                fillColor: newState['modifiedStates'][state]["party"] == "REPUBLICAN" ? 'red' : 'blue'
+            });
+            if (!statesMap[state].layer.getTooltip())
+                statesMap[state].layer.bindTooltip(newState['modifiedStates'][state]['score'].toString(), {
+                    permanent: true,
+                    direction: 'center',
+                    opacity: 1
+                });
+            else
+                statesMap[state].layer.setTooltipContent(newState['modifiedStates'][state]['score'].toString());
+            statesMap[state].party = newState['modifiedStates'][state]["party"];
+            statesMap[state].score = newState['modifiedStates'][state]['score'];
+        }
     });
     stompClient.send("/app/start");
 });
-
-function updateStates(states) {
-    console.log("States updated");
-}
 
 // function setConnected(connected) {
 //     $("#connect").prop("disabled", connected);
