@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static elections.domain.Game.GameStatus.*;
 import static elections.domain.PartyType.DEMOCRAT;
+import static elections.domain.PartyType.NOT_CAPTURED;
 import static elections.domain.PartyType.REPUBLICAN;
 import static elections.domain.State.StateType.HOME_STATE;
 import static elections.domain.States.CALIFORNIA;
@@ -82,7 +83,7 @@ public class GameService {
         if (from.getParty() != party)
             return;
 
-        if (from.getParty() == to.getParty()) {
+        if (from.getParty() == to.getParty() || to.getParty() == NOT_CAPTURED) {
             to.getScore().addAndGet(from.getScore().get() - 1);
             to.setParty(from.getParty());
             from.getScore().set(1);
