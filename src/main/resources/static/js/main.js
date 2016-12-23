@@ -21,7 +21,6 @@ var statesMap = {};
 var neighborStates = [];
 var chosenLayer = null;
 var reader = new jsts.io.GeoJSONReader();
-var mapLayersToParty = {};
 statesLayer.eachLayer(layer => {
     layer.setStyle({
         color: 'grey',
@@ -48,31 +47,50 @@ function onStateClick(layer) {
         return;
     if (chosenLayer != null) {
         if (chosenLayer == layer) {
-            chosenLayer = null;
             neighborStates.forEach(layer => {
-                layer.setStyle({
-                    fillColor: 'grey',
-                    color: 'grey'
-                });
-            });
-        } else if (neighborStates.indexOf(layer) != -1) {
-            neighborStates.forEach(layer => {
-                layer.setStyle({
-                    fillColor: 'grey',
-                    color: 'grey'
-                });
+                if (statesMap[statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]].party == 'NEUTRAL')
+                    layer.setStyle({
+                        fillColor: 'grey',
+                        color: 'grey'
+                    });
+                else if (statesMap[statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]].party == 'REPUBLICAN')
+                    layer.setStyle({
+                        fillColor: 'red',
+                        color: 'red'
+                    });
+                else
+                    layer.setStyle({
+                        fillColor: 'blue',
+                        color: 'blue'
+                    });
             });
             neighborStates = [];
-            console.info({
-                'from': {'stateAcronym': statesEnum[chosenLayer.toGeoJSON().properties.NAME.replace(' ', '_')]},
-                'to': {'stateAcronym': statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]},
-                'player': {'party': iam}
+            chosenLayer = null;
+        } else if (neighborStates.indexOf(layer) != -1) {
+            neighborStates.forEach(layer => {
+                if (statesMap[statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]].party == 'NEUTRAL')
+                    layer.setStyle({
+                        fillColor: 'grey',
+                        color: 'grey'
+                    });
+                else if (statesMap[statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]].party == 'REPUBLICAN')
+                    layer.setStyle({
+                        fillColor: 'red',
+                        color: 'red'
+                    });
+                else
+                    layer.setStyle({
+                        fillColor: 'blue',
+                        color: 'blue'
+                    });
             });
             stompClient.send('/app/state-changed', {}, JSON.stringify({
                 'from': statesEnum[chosenLayer.toGeoJSON().properties.NAME.replace(' ', '_')],
                 'to': statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')],
                 'party': iam
             }));
+            chosenLayer = null;
+            neighborStates = [];
         }
         return;
     }
@@ -82,10 +100,11 @@ function onStateClick(layer) {
         if (chosenLayer != layer) {
             if (reader.read(layer.toGeoJSON()).geometry.intersects(chosenLayerGeometry)) {
                 neighborStates.push(layer);
-                layer.setStyle({
-                    fillColor: 'orange',
-                    color: 'orange'
-                });
+                if (statesMap[statesEnum[layer.toGeoJSON().properties.NAME.replace(' ', '_')]].party == 'NEUTRAL')
+                    layer.setStyle({
+                        fillColor: 'orange',
+                        color: 'orange'
+                    });
             }
         }
     });
@@ -136,6 +155,10 @@ stompClient.connect({}, frame => {
                 statesMap[state].layer.setTooltipContent(newState['modifiedStates'][state]['score'].toString());
             statesMap[state].party = newState['modifiedStates'][state]["party"];
             statesMap[state].score = newState['modifiedStates'][state]['score'];
+            if (state == 'CA' && statesMap[state].party == 'REPUBLICAN')
+                alert("Republicans win!");
+            if (state == 'FL' && statesMap[state].party == 'DEMOCRAT')
+                alert("Democrats win");
         }
     });
     stompClient.send("/app/start");
